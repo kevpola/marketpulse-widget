@@ -31,6 +31,7 @@
       max-height: 720px;
     }
 
+    /* Header */
     .chat-header {
       background: #1a3a6b;
       padding: 18px 24px;
@@ -66,6 +67,7 @@
       flex-shrink: 0;
     }
 
+    /* Messages area */
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -79,7 +81,7 @@
     .message {
       display: flex;
       flex-direction: column;
-      max-width: 82%;
+      max-width: 85%;
     }
 
     .message.agent { align-self: flex-start; }
@@ -105,6 +107,61 @@
       border-bottom-right-radius: 4px;
     }
 
+    /* Report ready card */
+    .report-ready-card {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-bottom-left-radius: 4px !important;
+      padding: 20px !important;
+    }
+
+    .report-check {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .report-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a2233;
+      margin-bottom: 6px;
+    }
+
+    .report-card-subtitle {
+      font-size: 13.5px;
+      color: #6b7a99;
+      margin-bottom: 18px;
+      line-height: 1.55;
+    }
+
+    .view-report-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #EE7617;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 20px;
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .view-report-btn:hover { background: #d4680f; }
+
+    .report-card-cta {
+      font-size: 13px;
+      color: #6b7a99;
+      line-height: 1.6;
+      padding-top: 14px;
+      border-top: 1px solid #f0f3f8;
+    }
+
+    /* Typing indicator */
     .typing-indicator {
       display: none;
       align-self: flex-start;
@@ -132,6 +189,7 @@
       40% { transform: translateY(-6px); }
     }
 
+    /* Input area */
     .chat-input-area {
       padding: 16px 20px;
       background: #ffffff;
@@ -177,8 +235,10 @@
 
     .send-button:hover { background: #ea6b0f; }
     .send-button:disabled { background: #c8d0dc; cursor: not-allowed; }
+
     .send-button svg { width: 20px; height: 20px; }
 
+    /* Loading state */
     .loading-screen {
       flex: 1;
       display: flex;
@@ -203,6 +263,7 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Error state */
     .error-banner {
       display: none;
       background: #fff3f3;
@@ -213,6 +274,7 @@
       text-align: center;
     }
 
+    /* Scrollbar */
     .chat-messages::-webkit-scrollbar { width: 5px; }
     .chat-messages::-webkit-scrollbar-track { background: transparent; }
     .chat-messages::-webkit-scrollbar-thumb { background: #d0d9e8; border-radius: 10px; }
@@ -222,6 +284,7 @@
 
 <div class="chat-container">
 
+  <!-- Header -->
   <div class="chat-header">
     <img src="https://www.marketpulseai.io/images/marketpulse-logo.png"
          onerror="this.style.display='none'"
@@ -233,23 +296,28 @@
     <div class="status-dot"></div>
   </div>
 
+  <!-- Error banner -->
   <div class="error-banner" id="errorBanner">
     Something went wrong. Please refresh the page and try again.
   </div>
 
+  <!-- Loading screen -->
   <div class="loading-screen" id="loadingScreen">
     <div class="spinner"></div>
     <p>Starting your validation session…</p>
   </div>
 
+  <!-- Messages -->
   <div class="chat-messages" id="chatMessages" style="display:none;"></div>
 
+  <!-- Typing indicator -->
   <div class="typing-indicator" id="typingIndicator">
     <div class="typing-dot"></div>
     <div class="typing-dot"></div>
     <div class="typing-dot"></div>
   </div>
 
+  <!-- Input -->
   <div class="chat-input-area" id="inputArea" style="display:none;">
     <textarea
       id="chatInput"
@@ -269,23 +337,29 @@
 </div>
 
 <script>
+  // ─── CONFIG ────────────────────────────────────────────────────────
   const PROXY_URL = 'https://marketpulse-chat-proxy.vercel.app/api/chat';
+  // ───────────────────────────────────────────────────────────────────
 
   let conversationId = null;
-  const messagesEl   = document.getElementById('chatMessages');
-  const inputEl      = document.getElementById('chatInput');
-  const sendBtn      = document.getElementById('sendButton');
-  const typingEl     = document.getElementById('typingIndicator');
-  const loadingEl    = document.getElementById('loadingScreen');
-  const inputArea    = document.getElementById('inputArea');
-  const errorBanner  = document.getElementById('errorBanner');
+  let _reportText    = null; // Stores the full report text for the new-tab view
 
+  const messagesEl  = document.getElementById('chatMessages');
+  const inputEl     = document.getElementById('chatInput');
+  const sendBtn     = document.getElementById('sendButton');
+  const typingEl    = document.getElementById('typingIndicator');
+  const loadingEl   = document.getElementById('loadingScreen');
+  const inputArea   = document.getElementById('inputArea');
+  const errorBanner = document.getElementById('errorBanner');
+
+  // Auto-resize textarea
   inputEl.addEventListener('input', () => {
     inputEl.style.height = 'auto';
     inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
     sendBtn.disabled = inputEl.value.trim() === '';
   });
 
+  // Send on Enter (Shift+Enter for newline)
   inputEl.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -295,6 +369,7 @@
 
   sendBtn.addEventListener('click', sendMessage);
 
+  // ─── INIT ──────────────────────────────────────────────────────────
   async function init() {
     try {
       const res  = await fetch(PROXY_URL, {
@@ -303,12 +378,17 @@
         body: JSON.stringify({ action: 'create_conversation' })
       });
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || 'Failed to create conversation');
+
       conversationId = data.id || data.conversationId || data._id;
+
       loadingEl.style.display  = 'none';
       messagesEl.style.display = 'flex';
       inputArea.style.display  = 'flex';
+
       await getAgentOpener();
+
     } catch (err) {
       console.error(err);
       showError();
@@ -332,15 +412,19 @@
     }
   }
 
+  // ─── SEND MESSAGE ──────────────────────────────────────────────────
   async function sendMessage() {
     const text = inputEl.value.trim();
     if (!text || !conversationId) return;
-    inputEl.value = '';
+
+    inputEl.value        = '';
     inputEl.style.height = 'auto';
-    sendBtn.disabled = true;
+    sendBtn.disabled     = true;
+
     displayUserMessage(text);
     showTyping(true);
     scrollToBottom();
+
     try {
       const res  = await fetch(PROXY_URL, {
         method: 'POST',
@@ -349,8 +433,11 @@
       });
       const data = await res.json();
       showTyping(false);
+
       if (!res.ok) throw new Error(data.error || 'Failed to send message');
+
       displayAgentMessage(extractReply(data));
+
     } catch (err) {
       showTyping(false);
       displayAgentMessage('Sorry, something went wrong. Please try again.');
@@ -358,6 +445,7 @@
     }
   }
 
+  // ─── HELPERS ───────────────────────────────────────────────────────
   function extractReply(data) {
     if (typeof data === 'string') return data;
     if (data.content)  return data.content;
@@ -371,15 +459,28 @@
     return JSON.stringify(data);
   }
 
+  // Detect whether the response contains the validation report
+  function isValidationReport(text) {
+    return text.includes('## Your MarketPulse AI Idea Validation Report') ||
+           (text.includes('### Result:') && text.includes('### What'));
+  }
+
   function displayUserMessage(text) {
     const div = document.createElement('div');
     div.className = 'message user';
-    div.innerHTML = '<div class="message-bubble">' + escapeHtml(text) + '</div>';
+    div.innerHTML = `<div class="message-bubble">${escapeHtml(text)}</div>`;
     messagesEl.appendChild(div);
     scrollToBottom();
   }
 
   function displayAgentMessage(text) {
+    // Route validation reports to a dedicated card instead of raw text
+    if (isValidationReport(text)) {
+      _reportText = text;
+      displayReportCard();
+      return;
+    }
+
     const div = document.createElement('div');
     div.className = 'message agent';
     const formatted = escapeHtml(text)
@@ -389,7 +490,7 @@
       .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e2e8f0;margin:10px 0;">')
       .replace(/^&gt; (.+)$/gm, '<blockquote style="border-left:3px solid #EE7617;margin:8px 0;padding:6px 12px;color:#4a5568;font-style:italic;">$1</blockquote>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g,     '<strong>$1</strong>')
       .replace(/^- (.+)$/gm, '<div style="margin:2px 0;padding-left:14px;">• $1</div>')
       .replace(/\n/g, '<br>');
     div.innerHTML = '<div class="message-bubble">' + formatted + '</div>';
@@ -397,6 +498,324 @@
     scrollToBottom();
   }
 
+  // Show the branded report-ready card in the chat
+  function displayReportCard() {
+    const div = document.createElement('div');
+    div.className = 'message agent';
+    div.innerHTML = `
+      <div class="message-bubble report-ready-card">
+        <div class="report-check">✅</div>
+        <div class="report-card-title">Your validation report is ready.</div>
+        <div class="report-card-subtitle">Your idea has been assessed across all five dimensions. Click below to open your full formatted report.</div>
+        <button class="view-report-btn" onclick="openReport()">View Your Report &rarr;</button>
+        <div class="report-card-cta">
+          📬 Check your inbox — your next steps and a complete go-to-market guide from MarketPulse AI are on their way.
+        </div>
+      </div>
+    `;
+    messagesEl.appendChild(div);
+    scrollToBottom();
+  }
+
+  // Open the formatted report in a new tab
+  function openReport() {
+    if (!_reportText) return;
+    const parsed = parseReport(_reportText);
+    const html   = buildReportHTML(parsed);
+    const blob   = new Blob([html], { type: 'text/html' });
+    const url    = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+
+  // ─── REPORT PARSER ─────────────────────────────────────────────────
+  function parseReport(raw) {
+    const get = (pattern) => {
+      const m = raw.match(pattern);
+      return m ? m[1].trim() : '';
+    };
+
+    const getBullets = (pattern) => {
+      const m = raw.match(pattern);
+      if (!m) return [];
+      return m[1].split('\n')
+        .map(l => l.replace(/^[\s•\-\*]+/, '').trim())
+        .filter(l => l.length > 0);
+    };
+
+    // Name / idea / date
+    const nameDate = get(/## Your MarketPulse AI Idea Validation Report\s*\n?([\s\S]*?)(?=\n---|\n###)/)
+      .replace(/\*\*/g, '').replace(/\n/g, ' ').trim();
+
+    const result      = get(/### Result:\s*([^\n]+)/);
+    const verdict     = get(/^>\s*(.+)$/m);
+    const working     = getBullets(/### What.s Working\s*\n?([\s\S]*?)(?=\n---|\n###)/);
+    const focus       = getBullets(/### Where to Focus\s*\n?([\s\S]*?)(?=\n---|\n###)/);
+    const opportunity = get(/### The Market Opportunity\s*\n?([\s\S]*?)(?=\n---|\n###)/);
+    const next        = get(/### One Thing to Do Next\s*\n?([\s\S]*?)(?=\n---|\n###|Your report is ready|[“”]Your report|$)/);
+
+    // Derive result colour
+    let color = '#166534', bg = '#f0fdf4', border = '#bbf7d0'; // green default
+    if (/ALMOST THERE/i.test(result)) {
+      color = '#92400e'; bg = '#fffbeb'; border = '#fde68a';
+    } else if (/NEEDS WORK/i.test(result)) {
+      color = '#991b1b'; bg = '#fef2f2'; border = '#fecaca';
+    }
+
+    return { nameDate, result, verdict, working, focus, opportunity, next, color, bg, border };
+  }
+
+  // HTML-safe escape for the report page builder
+  function esc(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ─── REPORT PAGE BUILDER ───────────────────────────────────────────
+  function buildReportHTML(p) {
+
+    const bulletItems = (arr, dotColor) =>
+      arr.map(item =>
+        `<li style="list-style:none;padding:10px 14px 10px 36px;border-radius:8px;background:#f8f9fc;` +
+        `margin-bottom:8px;font-size:14.5px;line-height:1.65;color:#2d3748;position:relative;">` +
+        `<span style="position:absolute;left:14px;color:${dotColor};font-weight:700;font-size:17px;line-height:1;">•</span>` +
+        esc(item) + `</li>`
+      ).join('');
+
+    const sections = [];
+
+    if (p.working.length) {
+      sections.push(`
+        <div class="divider"></div>
+        <div class="section-title">
+          <div class="icon-box" style="background:#f0fdf4;">✓</div>
+          What's Working
+        </div>
+        <ul style="padding:0;">${bulletItems(p.working, '#22c55e')}</ul>`);
+    }
+
+    if (p.focus.length) {
+      sections.push(`
+        <div class="divider"></div>
+        <div class="section-title">
+          <div class="icon-box" style="background:#fff7ed;">→</div>
+          Where to Focus
+        </div>
+        <ul style="padding:0;">${bulletItems(p.focus, '#EE7617')}</ul>`);
+    }
+
+    if (p.opportunity) {
+      sections.push(`
+        <div class="divider"></div>
+        <div class="section-title">
+          <div class="icon-box" style="background:#eff6ff;">🌐</div>
+          The Market Opportunity
+        </div>
+        <div class="text-block">${esc(p.opportunity)}</div>`);
+    }
+
+    if (p.next) {
+      sections.push(`
+        <div class="divider"></div>
+        <div class="next-card">
+          <div class="next-label">⚡ One Thing to Do Next</div>
+          <div class="next-text">${esc(p.next)}</div>
+        </div>`);
+    }
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MarketPulse AI — Idea Validation Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Roboto', sans-serif; background: #f4f6fb; color: #1a2233; }
+
+.page-header {
+  background: #1a3a6b;
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-left h1 { color: #EE7617; font-size: 18px; font-weight: 700; }
+.header-left p  { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 3px; }
+.print-btn {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 9px 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Roboto', sans-serif;
+  transition: background 0.2s;
+}
+.print-btn:hover { background: rgba(255,255,255,0.22); }
+
+.report-container {
+  max-width: 760px;
+  margin: 40px auto;
+  padding: 0 24px 80px;
+}
+
+.report-meta {
+  font-size: 14px;
+  color: #6b7a99;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+  line-height: 1.6;
+}
+.report-meta strong { color: #1a2233; font-size: 15px; }
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  border: 2px solid ${esc(p.border)};
+  background: ${esc(p.bg)};
+  color: ${esc(p.color)};
+}
+
+.verdict {
+  background: #f8f9fc;
+  border-left: 4px solid #EE7617;
+  padding: 14px 20px;
+  border-radius: 0 8px 8px 0;
+  font-size: 15px;
+  font-style: italic;
+  color: #4a5568;
+  margin-bottom: 32px;
+  line-height: 1.75;
+}
+
+.divider { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2233;
+  margin-bottom: 14px;
+}
+
+.icon-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.text-block {
+  font-size: 14.5px;
+  line-height: 1.78;
+  color: #2d3748;
+  background: #f8f9fc;
+  padding: 16px 20px;
+  border-radius: 8px;
+}
+
+.next-card {
+  background: #1a3a6b;
+  color: white;
+  padding: 24px 28px;
+  border-radius: 12px;
+}
+.next-label {
+  color: #EE7617;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+.next-text { font-size: 15px; line-height: 1.72; }
+
+.inbox-banner {
+  margin-top: 28px;
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #1e40af;
+  line-height: 1.65;
+}
+
+.footer {
+  margin-top: 52px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  color: #9aaabf;
+  font-size: 13px;
+}
+.footer a { color: #1a3a6b; text-decoration: none; font-weight: 500; }
+.footer a:hover { text-decoration: underline; }
+
+@media print {
+  body { background: white; }
+  .print-btn { display: none !important; }
+  .inbox-banner { display: none; }
+  .report-container { margin-top: 20px; }
+}
+@media (max-width: 600px) {
+  .page-header { padding: 16px 20px; flex-wrap: wrap; gap: 12px; }
+  .report-container { padding: 0 16px 60px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="header-left">
+    <h1>MarketPulse AI — Idea Validator</h1>
+    <p>Free Idea Validation Report</p>
+  </div>
+  <button class="print-btn" onclick="window.print()">🖨&nbsp; Print / Save as PDF</button>
+</div>
+
+<div class="report-container">
+
+  <div class="report-meta">
+    <strong>Idea Validation Report</strong><br>
+    ${esc(p.nameDate)}
+  </div>
+
+  <div class="result-badge">${esc(p.result)}</div>
+
+  ${p.verdict ? `<div class="verdict">${esc(p.verdict)}</div>` : ''}
+
+  ${sections.join('')}
+
+  <div class="inbox-banner">
+    📬 <strong>Check your inbox.</strong> Your next steps and a complete go-to-market guide from MarketPulse AI are on their way.
+  </div>
+
+  <div class="footer">
+    Powered by <a href="https://marketpulseai.io" target="_blank">MarketPulse AI</a>
+    &nbsp;·&nbsp; Free Idea Validation Tool
+  </div>
+
+</div>
+</body>
+</html>`;
+  }
+
+  // ─── DISPLAY HELPERS ───────────────────────────────────────────────
   function showTyping(show) {
     typingEl.className = show ? 'typing-indicator visible' : 'typing-indicator';
     if (show) scrollToBottom();
@@ -407,7 +826,7 @@
   }
 
   function showError() {
-    loadingEl.style.display  = 'none';
+    loadingEl.style.display   = 'none';
     errorBanner.style.display = 'block';
   }
 
@@ -419,8 +838,10 @@
       .replace(/"/g, '&quot;');
   }
 
+  // ─── START ─────────────────────────────────────────────────────────
   init();
 </script>
 
 </body>
 </html>
+
