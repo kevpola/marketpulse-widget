@@ -309,10 +309,27 @@
       loadingEl.style.display  = 'none';
       messagesEl.style.display = 'flex';
       inputArea.style.display  = 'flex';
-      displayAgentMessage("Hi! I'm the MarketPulse AI Idea Validator.\n\nTell me about the business idea, product, or course you're thinking about launching — and I'll run a full market validation for you.\n\nWhat's your idea?");
+      await getAgentOpener();
     } catch (err) {
       console.error(err);
       showError();
+    }
+  }
+
+  async function getAgentOpener() {
+    showTyping(true);
+    try {
+      const res  = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_message', conversationId, message: '__start__' })
+      });
+      const data = await res.json();
+      showTyping(false);
+      displayAgentMessage(extractReply(data));
+    } catch (err) {
+      showTyping(false);
+      console.error(err);
     }
   }
 
