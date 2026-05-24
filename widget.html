@@ -90,7 +90,6 @@
       border-radius: 12px;
       font-size: 14.5px;
       line-height: 1.6;
-      white-space: pre-wrap;
     }
 
     .message.agent .message-bubble {
@@ -384,8 +383,14 @@
     const div = document.createElement('div');
     div.className = 'message agent';
     const formatted = escapeHtml(text)
+      .replace(/^### (.+)$/gm, '<h3 style="font-size:15px;font-weight:700;color:#1a2233;margin:10px 0 4px;">$1</h3>')
+      .replace(/^## (.+)$/gm,  '<h2 style="font-size:16px;font-weight:700;color:#1a2233;margin:10px 0 4px;">$1</h2>')
+      .replace(/^# (.+)$/gm,   '<h1 style="font-size:17px;font-weight:700;color:#1a2233;margin:10px 0 4px;">$1</h1>')
+      .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e2e8f0;margin:10px 0;">')
+      .replace(/^&gt; (.+)$/gm, '<blockquote style="border-left:3px solid #EE7617;margin:8px 0;padding:6px 12px;color:#4a5568;font-style:italic;">$1</blockquote>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+      .replace(/^- (.+)$/gm, '<div style="margin:2px 0;padding-left:14px;">• $1</div>')
       .replace(/\n/g, '<br>');
     div.innerHTML = '<div class="message-bubble">' + formatted + '</div>';
     messagesEl.appendChild(div);
