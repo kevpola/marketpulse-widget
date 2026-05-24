@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MarketPulse AI — Idea Validator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #f4f6fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 720px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 85vh;
+      max-height: 720px;
+    }
+
+    /* Header */
+    .chat-header {
+      background: #1a3a6b;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .chat-header img {
+      height: 40px;
+      width: auto;
+    }
+
+    .chat-header-text h1 {
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .chat-header-text p {
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #F97316;
+      border-radius: 50%;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* Messages area */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #f8f9fc;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 82%;
+    }
+
+    .message.agent { align-self: flex-start; }
+    .message.user  { align-self: flex-end; }
+
+    .message-bubble {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .message.agent .message-bubble {
+      background: #ffffff;
+      color: #1a2233;
+      border: 1px solid #e2e8f0;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.user .message-bubble {
+      background: #1a3a6b;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: none;
+      align-self: flex-start;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      border-bottom-left-radius: 4px;
+      padding: 12px 18px;
+    }
+
+    .typing-indicator.visible { display: flex; gap: 5px; align-items: center; }
+
+    .typing-dot {
+      width: 7px;
+      height: 7px;
+      background: #1a3a6b;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+
+    /* Input area */
+    .chat-input-area {
+      padding: 16px 20px;
+      background: #ffffff;
+      border-top: 1px solid #e8edf4;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      border: 1.5px solid #d0d9e8;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      color: #1a2233;
+      resize: none;
+      outline: none;
+      min-height: 44px;
+      max-height: 120px;
+      overflow-y: auto;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input:focus { border-color: #1a3a6b; }
+    .chat-input::placeholder { color: #9aaabf; }
+
+    .send-button {
+      background: #F97316;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .send-button:hover { background: #ea6b0f; }
+    .send-button:disabled { background: #c8d0dc; cursor: not-allowed; }
+
+    .send-button svg { width: 20px; height: 20px; }
+
+    /* Loading state */
+    .loading-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #f8f9fc;
+      color: #1a3a6b;
+    }
+
+    .loading-screen p { font-size: 14px; color: #6b7a99; }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #1a3a6b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error state */
+    .error-banner {
+      display: none;
+      background: #fff3f3;
+      border: 1px solid #fca5a5;
+      color: #b91c1c;
+      font-size: 13px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+
+    /* Scrollbar */
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #d0d9e8; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+
+  <!-- Header -->
+  <div class="chat-header">
+    <img src="https://www.marketpulseai.io/images/marketpulse-logo.png"
+         onerror="this.style.display='none'"
+         alt="MarketPulse AI"/>
+    <div class="chat-header-text">
+      <h1>MarketPulse AI — Idea Validator</h1>
+      <p>Free • Takes 5–10 minutes • Get your result instantly</p>
+    </div>
+    <div class="status-dot"></div>
+  </div>
+
+  <!-- Error banner -->
+  <div class="error-banner" id="errorBanner">
+    Something went wrong. Please refresh the page and try again.
+  </div>
+
+  <!-- Loading screen (shown while connecting) -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <p>Starting your validation session…</p>
+  </div>
+
+  <!-- Messages (hidden until ready) -->
+  <div class="chat-messages" id="chatMessages" style="display:none;"></div>
+
+  <!-- Typing indicator -->
+  <div class="typing-indicator" id="typingIndicator">
+    <div class="typing-dot"></div>
+    <div class="typing-dot"></div>
+    <div class="typing-dot"></div>
+  </div>
+
+  <!-- Input -->
+  <div class="chat-input-area" id="inputArea" style="display:none;">
+    <textarea
+      id="chatInput"
+      class="chat-input"
+      placeholder="Type your message here…"
+      rows="1"
+    ></textarea>
+    <button class="send-button" id="sendButton" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────────────
+  // Replace this with your deployed Vercel URL once live
+  const PROXY_URL = 'https://marketpulse-chat-proxy.vercel.app/api/chat';
+  // ───────────────────────────────────────────────────────────────────
+
+  let conversationId = null;
+  const messagesEl   = document.getElementById('chatMessages');
+  const inputEl      = document.getElementById('chatInput');
+  const sendBtn      = document.getElementById('sendButton');
+  const typingEl     = document.getElementById('typingIndicator');
+  const loadingEl    = document.getElementById('loadingScreen');
+  const inputArea    = document.getElementById('inputArea');
+  const errorBanner  = document.getElementById('errorBanner');
+
+  // Auto-resize textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+    sendBtn.disabled = inputEl.value.trim() === '';
+  });
+
+  // Send on Enter (Shift+Enter for newline)
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  // ─── INIT: Create conversation ─────────────────────────────────────
+  async function init() {
+    try {
+      const res  = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_conversation' })
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Failed to create conversation');
+
+      conversationId = data.id || data.conversationId || data._id;
+
+      // Hide loading, show chat
+      loadingEl.style.display  = 'none';
+      messagesEl.style.display = 'flex';
+      inputArea.style.display  = 'flex';
+
+      // Get the opening message from the agent
+      await getAgentOpener();
+
+    } catch (err) {
+      console.error(err);
+      showError();
+    }
+  }
+
+  // ─── Get the agent's opening message ───────────────────────────────
+  async function getAgentOpener() {
+    showTyping(true);
+    try {
+      const res  = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_message',
+          conversationId,
+          message: '__start__'
+        })
+      });
+      const data = await res.json();
+      showTyping(false);
+      displayAgentMessage(extractReply(data));
+    } catch (err) {
+      showTyping(false);
+      console.error(err);
+    }
+  }
+
+  // ─── SEND MESSAGE ──────────────────────────────────────────────────
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text || !conversationId) return;
+
+    inputEl.value   = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    displayUserMessage(text);
+    showTyping(true);
+    scrollToBottom();
+
+    try {
+      const res  = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_message',
+          conversationId,
+          message: text
+        })
+      });
+      const data = await res.json();
+      showTyping(false);
+
+      if (!res.ok) throw new Error(data.error || 'Failed to send message');
+
+      displayAgentMessage(extractReply(data));
+
+    } catch (err) {
+      showTyping(false);
+      displayAgentMessage('Sorry, something went wrong. Please try again.');
+      console.error(err);
+    }
+  }
+
+  // ─── HELPERS ───────────────────────────────────────────────────────
+  function extractReply(data) {
+    // Handle different possible response shapes from Base44
+    if (typeof data === 'string') return data;
+    if (data.content)  return data.content;
+    if (data.message)  return data.message;
+    if (data.reply)    return data.reply;
+    if (data.response) return data.response;
+    if (Array.isArray(data)) {
+      const last = data[data.length - 1];
+      return last?.content || last?.message || JSON.stringify(last);
+    }
+    return JSON.stringify(data);
+  }
+
+  function displayUserMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'message user';
+    div.innerHTML = `<div class="message-bubble">${escapeHtml(text)}</div>`;
+    messagesEl.appendChild(div);
+    scrollToBottom();
+  }
+
+  function displayAgentMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'message agent';
+    // Convert markdown-style bold and newlines for basic formatting
+    const formatted = escapeHtml(text)
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+    div.innerHTML = `<div class="message-bubble">${formatted}</div>`;
+    messagesEl.appendChild(div);
+    scrollToBottom();
+  }
+
+  function showTyping(show) {
+    typingEl.className = show ? 'typing-indicator visible' : 'typing-indicator';
+    if (show) scrollToBottom();
+  }
+
+  function scrollToBottom() {
+    setTimeout(() => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }, 50);
+  }
+
+  function showError() {
+    loadingEl.style.display  = 'none';
+    errorBanner.style.display = 'block';
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─── START ─────────────────────────────────────────────────────────
+  init();
+</script>
+
+</body>
+</html>
